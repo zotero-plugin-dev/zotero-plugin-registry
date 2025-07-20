@@ -1,0 +1,51 @@
+{
+  "name": "zotero-plugin-registry",
+  "type": "module",
+  "version": "0.0.0",
+  "private": "true",
+  "packageManager": "pnpm@10.12.4",
+  "description": "Zotero Plugin Registry",
+  "author": "northword",
+  "license": "MIT",
+  "homepage": "https://github.com/zotero-plugin-dev/zotero-plugin-registry#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zotero-plugin-dev/zotero-plugin-registry.git"
+  },
+  "scripts": {
+    "run": "tsx scripts/build.ts",
+    "build": "pnpm dev --all",
+    "check-pr": "pnpm dev --pr",
+    "generate-schema": "bash scripts/schema.sh",
+    "lint:fix": "eslint . --fix",
+    "lint:check": "eslint .",
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.16.1",
+    "@types/adm-zip": "^0.5.7",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.15.34",
+    "adm-zip": "^0.5.16",
+    "axios": "^1.10.0",
+    "consola": "^3.4.2",
+    "cross-env": "7.0.3",
+    "es-toolkit": "^1.39.5",
+    "eslint": "^9.30.0",
+    "fs-extra": "^11.3.0",
+    "globby": "^14.1.0",
+    "husky": "^9.1.7",
+    "jsonc": "^2.0.0",
+    "lint-staged": "^16.1.2",
+    "octokit": "^5.0.3",
+    "ofetch": "^1.4.1",
+    "prettier": "^3.6.2",
+    "ts-json-schema-generator": "^2.4.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "*.*": "eslint --fix"
+  }
+}

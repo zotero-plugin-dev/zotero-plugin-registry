@@ -1,0 +1,9 @@
+{
+  "id": "zotero-format-metadata@northword.cn",
+  "name": "Linter for Zotero",
+  "description": "格式化 Zotero 元数据的插件",
+  "icon": "https://raw.githubusercontent.com/northword/zotero-format-metadata/main/icon.png",
+  "homepage": "https://github.com/northword/zotero-format-metadata",
+  "update_json": "https://raw.githubusercontent.com/northword/zotero-format-metadata/main/update.json",
+  "tags": ["metadata", "favorite"]
+}

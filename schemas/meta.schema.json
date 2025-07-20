@@ -1,0 +1,97 @@
+{
+  "$ref": "#/definitions/PluginMeta",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "PluginMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Plugin ID",
+          "markdownDescription": "Plugin ID",
+          "type": "string"
+        },
+        "name": {
+          "description": "插件名称",
+          "markdownDescription": "插件名称",
+          "type": "string"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "$ref": "#/definitions/TagType"
+          },
+          "type": "array"
+        },
+        "update_json": {
+          "description": "The URL of `update.json`",
+          "markdownDescription": "The URL of `update.json`",
+          "type": "string"
+        },
+        "versions": {
+          "items": {
+            "$ref": "#/definitions/Version"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "update_json"
+      ],
+      "type": "object"
+    },
+    "TagType": {
+      "description": "插件标签",
+      "enum": [
+        "favorite",
+        "metadata",
+        "interface",
+        "attachment",
+        "notes",
+        "reader",
+        "productivity",
+        "visualization",
+        "integration",
+        "ai",
+        "writing",
+        "developer",
+        "others"
+      ],
+      "markdownDescription": "插件标签",
+      "type": "string"
+    },
+    "Version": {
+      "additionalProperties": false,
+      "properties": {
+        "strict_max_version": {
+          "type": "string"
+        },
+        "strict_min_version": {
+          "type": "string"
+        },
+        "update_hash": {
+          "type": "string"
+        },
+        "update_link": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "update_link"
+      ],
+      "type": "object"
+    }
+  }
+}

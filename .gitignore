@@ -1,0 +1,8 @@
+node_modules/
+
+plugins/**
+!plugins/*
+!plugins/*/meta.json
+
+plugins-index.json
+.cache.json

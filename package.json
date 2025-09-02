@@ -30,7 +30,7 @@
     "adm-zip": "^0.5.16",
     "axios": "^1.10.0",
     "consola": "^3.4.2",
-    "cross-env": "7.0.3",
+    "cross-env": "10.0.0",
     "es-toolkit": "^1.39.5",
     "eslint": "^9.30.0",
     "fs-extra": "^11.3.0",

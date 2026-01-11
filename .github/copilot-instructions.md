@@ -14,26 +14,56 @@
 
 ### Plugin Data Model
 - **Plugin ID** (e.g., `zotero-format-metadata@northword.cn`): Unique identifier, used as directory name
-- **meta.json**: Manual metadata containing `id`, `name`, `update_json` URL, `description`, `homepage`, `tags`
+- **meta.json**: Manual metadata containing `id`, `name`, `updateUrl` (or deprecated `update_json`), `description`, `homepage`, `tags`, optional `patchedVersions`
 - **update.json**: Hosted by plugin developer, follows Zotero extension manifest format with version/compatibility data
 - **Tags**: Predefined enum (`metadata`, `interface`, `attachment`, `notes`, `reader`, `productivity`, `visualization`, `integration`, `ai`, `writing`, `developer`, `favorite`, `others`)
+- **patchedVersions**: Manual version list in meta.json for patching or supplementing remote versions
 - See [shared/src/types.ts](shared/src/types.ts) for complete type definitions
 
 ### Bot Processing Pipeline
-1. **CLI Entry** ([bot/src/cli.ts](bot/src/cli.ts)): Accepts optional plugin ID, defaults to all plugins
-2. **Process Plugins** ([bot/src/processor.ts](bot/src/processor.ts)): Reads `meta.json`, fetches remote `update.json`
-3. **Parse Versions**: Extracts version data from `addons[pluginId].updates` array in update.json
-4. **Extract Compatibility**: Maps `applications.zotero` and `applications.gecko` min/max versions
-5. **Cache**: Stores hash in `.cache.json` to detect update.json changes
-6. **Report**: ([bot/src/report.ts](bot/src/report.ts)) Handles GitHub integration and error reporting
+1. **CLI Entry** ([bot/src/cli.ts](bot/src/cli.ts)): `zbot build` (default) or `zbot check` (PR validation)
+2. **Load Meta** ([bot/src/loaders/meta.ts](bot/src/loaders/meta.ts)): Validates `meta.json` schema and required fields
+3. **Fetch Remote** ([bot/src/loaders/update-json.ts](bot/src/loaders/update-json.ts)): Fetches remote `update.json` and parses `addons[pluginId].updates` array
+4. **Merge Versions** ([bot/src/merger.ts](bot/src/merger.ts)): Combines remote versions with `patchedVersions`, prioritizing patches, then sorts semantically
+5. **Extract Compatibility** ([bot/src/merger.ts](bot/src/merger.ts)): Determines min/max Zotero versions from version list
+6. **Generate Outputs** ([bot/src/processor.ts](bot/src/processor.ts)): Creates `meta.generated.json` and `latest.json`
+7. **Report Results** ([bot/src/report.ts](bot/src/report.ts)): Logs to console or GitHub (PR comments, issues)
 
-### Authentication & External Access
-- **GitHub Token**: Required environment variable `GITHUB_TOKEN` for API-rate-limited GitHub requests
-- **HTTP Fetch** ([bot/src/utils.ts](bot/src/utils.ts)): 
-  - Detects GitHub URLs and adds Bearer token
-  - Used for fetching remote `update.json` files
-  - 10-second timeout for all requests
-  - Axios-based with response type support (json, arraybuffer, etc.)
+### Authentication & HTTP
+- **GitHub Token**: `GITHUB_TOKEN` env var for GitHub API rate limits (Bearer auth on GitHub URLs)
+- **HTTP Fetch** ([bot/src/utils/http.ts](bot/src/utils/http.ts)): Axios with auto-detection of GitHub domains
+- **Timeout**: 10 seconds for fetch, 30 seconds for XPI download
+- **XPI Handling** ([bot/src/utils/xpi.ts](bot/src/utils/xpi.ts)): Download and validate XPI structure (manifest.json)
+
+## Directory Structure (Bot)
+
+```
+bot/src/
+├── cli.ts              # Commander CLI entry point
+├── build.ts            # Build orchestration (buildPlugins, checkPlugins)
+├── processor.ts        # Single plugin processing pipeline
+├── merger.ts           # Version merging and compatibility logic
+├── report.ts           # Console/GitHub reporting
+├── github-reporter.ts  # Octokit integration for PRs and issues
+├── cache.ts            # (stub) Cache management
+├── loaders/
+│   ├── index.ts        # Re-exports
+│   ├── meta.ts         # loadPluginMeta() with validation
+│   └── update-json.ts  # loadUpdateJson() with parsing
+└── utils/
+    ├── index.ts        # Re-exports
+    ├── http.ts         # fetchData() with GitHub auth
+    ├── xpi.ts          # downloadXpi, extractXpiInfo, verifyXpi
+    └── git.ts          # detectChangedPlugins() for PR mode
+```
+
+## Key Interfaces
+
+**PluginMeta** (from shared): Core metadata with optional `patchedVersions` array
+**Version**: `{ version, update_link, update_hash?, strict_min_version?, strict_max_version? }`
+**GeneratedMeta**: Extended PluginMeta with merged versions, compatibility info, and stats
+**ProcessResult**: `{ success: string[], errors: PluginError[] }`
+**PluginError**: `{ pluginId, stage, message }` where stage is 'schema'|'fetch'|'xpi'|'merge'|'validation'
 
 ## Developer Workflows
 
@@ -45,63 +75,89 @@ pnpm install
 # Process all plugins
 pnpm run build
 
-# Process specific plugin by ID
-pnpm run --only zotero-format-metadata@northword.cn
+# Process specific plugin(s)
+pnpm run build plugin-id-1 plugin-id-2
+
+# Check mode for PR validation
+pnpm run check [changed-plugin-ids]
 
 # Generate TypeScript schema from types
 pnpm run -C shared generate-schema
+
+# Linting
+pnpm run lint:fix
 ```
 
 ### Adding New Plugins
 1. Create `plugins/<plugin-id>/` directory
-2. Add `meta.json` with required fields: `id`, `name`, `update_json`, optionally `description`, `homepage`, `tags`
-3. Run bot to generate `meta.generated.json` and `latest.json`
+2. Add `meta.json` with required fields: `id`, `name`, `updateUrl`, plus optionally `description`, `homepage`, `tags`, `patchedVersions`
+3. Run `pnpm run build` to generate outputs
 4. Commit and open PR
 
-### Code Quality
-- **Linting**: `eslint` with `@antfu/eslint-config`, allows `console` statements
-- **Pre-commit**: Husky runs `lint-staged` on all changed files
-- Fix linting: `pnpm run lint:fix`
+### Testing & Validation
+- Schema validation is automatic in `loadPluginMeta()`
+- Version compatibility is computed in `extractCompatibility()`
+- XPI verification can be added later (currently a TODO in processor)
 
 ## Project Conventions
 
 ### TypeScript Patterns
 - **Monorepo imports**: Use workspace protocol, e.g., `@zotero-plugin-registry/shared`
-- **Module system**: ESM (`"type": "module"` in all package.json files)
+- **Module system**: ESM (`"type": "module"` in all package.json files), use `.js` extensions in imports
 - **Async/await**: Standard for all I/O operations
+- **Error handling**: Throw early with descriptive messages, caught and reported in ProcessResult
 
 ### File Organization
-- Shared types live in `shared/src/types.ts`, exported via package exports in `shared/package.json`
-- Schema generation: Run `scripts/generate-schema.sh` to create `meta.schema.json` from types
-- Plugin metadata format is validated against `meta.schema.json`
+- Shared types live in [shared/src/types.ts](shared/src/types.ts), exported via [shared/package.json](shared/package.json) exports
+- Schema generation: Run `pnpm run -C shared generate-schema` to create `meta.schema.json`
+- Bot modules are organized by concern: loaders, utils, core logic
 
-### Error Handling
-- **ProcessResult**: Captures both `success: string[]` and `errors: PluginError[]`
-- Continues processing remaining plugins even if one fails
-- Exit code 1 when errors occur (for CI/CD)
+### Import Ordering (ESLint enforced)
+1. Node builtins (`node:*`)
+2. External packages (alphabetically)
+3. Type imports
+4. Local imports (relative paths)
 
-## Integration Points
+## Version Merging Strategy
 
-### External Dependencies
-- **octokit**: GitHub API client (not actively used in current code but included)
-- **axios**: HTTP requests with auth headers
-- **adm-zip**: XPI file handling (structure for future use)
-- **globby**: File globbing for plugin discovery
-- **jsonc**: JSON with comments parsing
-- **es-toolkit**: Utility library
-- **fs-extra**: File system operations
+When combining remote and patched versions:
+1. Build a map indexed by version number
+2. Add all remote versions first
+3. Apply patched versions (override if exists, add new if missing)
+4. Sort by semantic version (descending, using `semver` package)
+5. Return final merged list
 
-### CI/CD Considerations
-- GITHUB_TOKEN must be available in environment for GitHub URL requests
-- Error reporting to GitHub issues/PRs (via `report.ts`, implementation details present)
-- Build artifacts: `meta.generated.json` and `latest.json` files per plugin
+This allows teams to patch remote update.json errors without waiting for upstream fixes.
+
+## External Dependencies
+
+- **commander**: CLI argument parsing
+- **consola**: Colored console output
+- **axios**: HTTP requests
+- **adm-zip**: XPI (ZIP) file parsing
+- **semver**: Semantic version comparison
+- **simple-git**: Git operations for PR detection
+- **octokit**: GitHub API client
+- **fs-extra**: Enhanced file system
+- **globby**: File pattern matching
+
+## CI/CD Considerations
+
+- **GITHUB_TOKEN** must be available for authenticated requests
+- **CI** env var distinguishes CI vs local environments
+- **GITHUB_EVENT_NAME** = 'pull_request' for PR validation
+- **GITHUB_REPOSITORY** = 'owner/repo' for API interactions
+- Build fails (exit code 1) if any plugin has errors
+- GitHub integration: PR comments on validation failure, issues for scheduled runs
 
 ## Common Task Patterns
 
-**Adding features to processor**: Modify [bot/src/processor.ts](bot/src/processor.ts), ensure `ProcessResult` is properly populated with successes/errors
+**Modifying processor logic**: Edit [bot/src/processor.ts](bot/src/processor.ts), ensure ProcessResult properly tracks successes/errors
 
-**Updating shared types**: Edit [shared/src/types.ts](shared/src/types.ts), then run schema generation to update validation
+**Extending metadata support**: Update [shared/src/types.ts](shared/src/types.ts) interface, then regenerate schema
 
-**Debugging plugin processing**: Check `.cache.json` in plugin directory to understand last-fetch state; verify `update_json` URL format matches Zotero manifest structure
+**Adding new loader**: Create module in `loaders/`, export from [bot/src/loaders/index.ts](bot/src/loaders/index.ts)
 
-**Working with pnpm**: Always use workspace commands: `pnpm run -C <package>` or `pnpm run --only <package>` for scoped tasks
+**GitHub integration**: Use [bot/src/github-reporter.ts](bot/src/github-reporter.ts) for API calls via Octokit
+
+**Debugging plugin processing**: Check `.cache.json` in plugin directory and verify URL accessibility

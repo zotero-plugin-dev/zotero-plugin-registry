@@ -1,12 +1,13 @@
-import antfu from "@antfu/eslint-config";
+import antfu from '@antfu/eslint-config'
 
 export default antfu({
-  stylistic: false,
+  stylistic: true,
   javascript: {
     overrides: {
-      "no-console": "off",
+      'no-console': 'off',
     },
   },
-});
+  ignores: ['**/*.md'],
+})
 
 // TODO: sort meta.json

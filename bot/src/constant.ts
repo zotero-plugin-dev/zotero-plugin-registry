@@ -1,1 +1,1 @@
-export const PluginsRoot = "plugins";
+export const PluginsRoot = 'plugins'

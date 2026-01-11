@@ -1,50 +1,65 @@
 {
-  "$ref": "#/definitions/PluginMeta",
+  "$ref": "#/definitions/PluginMetaInput",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "PluginMeta": {
+    "PluginMetaInput": {
       "additionalProperties": false,
       "properties": {
         "description": {
+          "description": "Short description",
+          "markdownDescription": "Short description",
           "type": "string"
         },
         "homepage": {
+          "description": "Homepage or documentation URL",
+          "markdownDescription": "Homepage or documentation URL",
           "type": "string"
         },
         "id": {
-          "description": "Plugin ID",
-          "markdownDescription": "Plugin ID",
+          "description": "Unique plugin ID (must match directory name) e.g., zotero-format-metadata@northword.cn",
+          "markdownDescription": "Unique plugin ID (must match directory name)\ne.g., zotero-format-metadata@northword.cn",
           "type": "string"
         },
         "name": {
-          "description": "Plugin name",
-          "markdownDescription": "Plugin name",
+          "description": "Plugin display name",
+          "markdownDescription": "Plugin display name",
           "type": "string"
         },
-        "repo": {
-          "type": "string"
-        },
-        "tags": {
-          "items": {
-            "$ref": "#/definitions/TagType"
-          },
-          "type": "array"
-        },
-        "update_json": {
-          "description": "The URL of `update.json`",
-          "markdownDescription": "The URL of `update.json`",
-          "type": "string"
-        },
-        "versions": {
+        "patchedVersions": {
+          "description": "Manually maintained versions list for patching Follows Zotero Update Manifest format",
           "items": {
             "$ref": "#/definitions/Version"
           },
+          "markdownDescription": "Manually maintained versions list for patching\nFollows Zotero Update Manifest format",
           "type": "array"
+        },
+        "repoUrl": {
+          "description": "Source code repository URL (GitHub/Gitee)",
+          "markdownDescription": "Source code repository URL (GitHub/Gitee)",
+          "type": "string"
+        },
+        "tags": {
+          "description": "Plugin classification tags",
+          "items": {
+            "$ref": "#/definitions/TagType"
+          },
+          "markdownDescription": "Plugin classification tags",
+          "type": "array"
+        },
+        "updateUrl": {
+          "description": "The URL of Zotero standard `update.json`",
+          "markdownDescription": "The URL of Zotero standard `update.json`",
+          "type": "string"
+        },
+        "update_json": {
+          "description": "(Deprecated, use updateUrl) The URL of `update.json`",
+          "markdownDescription": "(Deprecated, use updateUrl) The URL of `update.json`",
+          "type": "string"
         }
       },
       "required": [
         "id",
-        "update_json"
+        "updateUrl"
       ],
       "type": "object"
     },

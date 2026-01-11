@@ -3,7 +3,7 @@
 // CI and not pr: open an issue
 // Default: console
 
-import type { ProcessResult } from "./processor.js";
+import type { ProcessResult } from "./processor.ts";
 
 export function report(result: ProcessResult) {
   const { success, errors } = result;

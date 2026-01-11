@@ -1,9 +1,12 @@
-import type { PluginMeta, UpdateJSON, Version } from "./types.js";
+import type {
+  PluginMeta,
+  UpdateJSON,
+  Version,
+} from "@zotero-plugin-registry/shared";
 import path from "node:path";
 import fs from "fs-extra";
-import { fetchData } from "./utils.js";
-
-const PluginsRoot = "plugins";
+import { PluginsRoot } from "./constant.ts";
+import { fetchData } from "./utils.ts";
 
 export interface PluginError {
   pluginId: string;
@@ -36,8 +39,14 @@ async function _updateJson(url: string, id: string): Promise<Version[]> {
       throw new Error(`Invalid or missing "version" for plugin ${id}`);
     if (!update_link)
       throw new Error(`Invalid or missing "update_link" for plugin ${id}`);
-    const strict_min_version = u.applications.zotero.strict_min_version ?? "*";
-    const strict_max_version = u.applications.zotero.strict_max_version ?? "*";
+    const strict_min_version =
+      u.applications.zotero?.strict_min_version ??
+      u.applications.gecko?.strict_min_version ??
+      "*";
+    const strict_max_version =
+      u.applications.zotero?.strict_max_version ??
+      u.applications.gecko?.strict_max_version ??
+      "*";
 
     versions.push({
       version,

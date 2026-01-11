@@ -17,8 +17,8 @@
           "type": "string"
         },
         "name": {
-          "description": "插件名称",
-          "markdownDescription": "插件名称",
+          "description": "Plugin name",
+          "markdownDescription": "Plugin name",
           "type": "string"
         },
         "repo": {

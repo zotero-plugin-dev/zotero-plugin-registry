@@ -1,0 +1,6 @@
+packages:
+  - bot
+  - plugins
+  - frontend
+  - shared
+  - "!**/dist/**"

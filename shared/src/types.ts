@@ -70,11 +70,21 @@ export interface UpdateJSON {
          */
         update_hash?: string;
         applications: {
+          /**
+           * For Zotero 7 or newer
+           *
+           * strict_*_version is begin with Zotero version
+           */
           zotero: {
             strict_min_version?: string;
             strict_max_version?: string;
           };
-          [application: string]: {
+          /**
+           * For Zotero 6 or older
+           *
+           * strict_*_version is begin with firefox version (60)
+           */
+          gecko?: {
             strict_min_version?: string;
             strict_max_version?: string;
           };

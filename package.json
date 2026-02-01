@@ -21,7 +21,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.2.0",
+    "@antfu/eslint-config": "^7.2.0",
     "@types/node": "^24.10.1",
     "@zotero-plugin-registry/bot": "workspace:",
     "eslint": "^9.39.1",

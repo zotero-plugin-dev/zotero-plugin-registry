@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "private": "true",
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.28.2",
   "description": "Zotero Plugin Registry",
   "author": "northword",
   "license": "MIT",
@@ -21,13 +21,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.2.0",
-    "@types/node": "^24.10.1",
+    "@antfu/eslint-config": "^6.7.3",
+    "@types/node": "^24.10.9",
     "@zotero-plugin-registry/bot": "workspace:",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
-    "prettier": "^3.7.3",
+    "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },

@@ -24,7 +24,7 @@
     "@antfu/eslint-config": "^6.2.0",
     "@types/node": "^24.10.1",
     "@zotero-plugin-registry/bot": "workspace:",
-    "eslint": "^9.39.1",
+    "eslint": "^10.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.3",

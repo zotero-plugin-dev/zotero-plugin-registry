@@ -4,6 +4,15 @@
   "description": "格式化 Zotero 元数据的插件",
   "icon": "https://raw.githubusercontent.com/northword/zotero-format-metadata/main/icon.png",
   "homepage": "https://github.com/northword/zotero-format-metadata",
+  "repoUrl": "https://github.com/northword/zotero-format-metadata",
   "updateUrl": "https://raw.githubusercontent.com/northword/zotero-format-metadata/main/update.json",
-  "tags": ["metadata", "favorite"]
+  "tags": ["metadata", "favorite"],
+  "patchedVersions": [
+    {
+      "version": "1.26.0",
+      "update_link": "https://github.com/northword/zotero-format-metadata/releases/download/v1.26.0/linter-for-zotero.xpi",
+      "strict_min_version": "6.999",
+      "strict_max_version": "8.*"
+    }
+  ]
 }

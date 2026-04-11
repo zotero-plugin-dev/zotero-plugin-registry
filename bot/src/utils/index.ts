@@ -1,4 +1,6 @@
 export { isUpdateJsonChanged } from './cache.ts'
+export { fetchDownloadCount } from './download-count.ts'
 export { detectChangedPlugins } from './git.ts'
 export { fetchData } from './http.ts'
+export { fetchGitHubStats, fetchRepoStats } from './stats.ts'
 export { downloadXpi, extractXpiInfo } from './xpi.ts'

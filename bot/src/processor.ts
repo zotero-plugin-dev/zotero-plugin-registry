@@ -12,24 +12,47 @@ import { PluginsRoot } from './constant.ts'
 import { loadPluginMeta, loadUpdateJson } from './loaders/index.ts'
 import { extractCompatibility, mergeVersions } from './merger.ts'
 import { fetchRepoStats } from './utils/stats.ts'
-import { downloadXpi, extractXpiInfo } from './utils/xpi.ts'
+import {
+  cleanupOldXpiCaches,
+  downloadXpi,
+  saveXpiCache,
+  validateCachedXpi,
+} from './utils/xpi.ts'
 
 /**
- * Verify the latest XPI version
- * Downloads and validates the XPI integrity
- * @param version The version to verify
+ * Download and save the latest XPI version to plugin cache
+ * Downloads, verifies, and persists the XPI file to the plugin directory
+ * @param version The version to download and cache
  * @param pluginId The plugin ID
- * @throws Error if verification fails
+ * @param pluginDir The plugin directory
+ * @returns Metadata about the cached XPI (hash, path, timestamp)
+ * @throws Error if download/verification fails
  */
-async function verifyLatestXpi(version: Version, pluginId: string): Promise<void> {
+async function downloadAndCacheLatestXpi(
+  version: Version,
+  pluginId: string,
+  pluginDir: string,
+): Promise<{ version: string, url: string, hash?: string }> {
   if (!version.update_link) {
     throw new Error('Version has no update_link')
   }
 
-  const tempXpiPath = path.join(PluginsRoot, pluginId, `.temp-${version.version}.xpi`)
+  // Check if already cached
+  const isCached = await validateCachedXpi(pluginDir, version.version)
+  if (isCached) {
+    consola.debug(`XPI already cached for ${pluginId} v${version.version}`)
+    // Return cached file info
+    return {
+      version: version.version,
+      url: `${version.version}.xpi`,
+      hash: version.update_hash,
+    }
+  }
+
+  const tempXpiPath = path.join(pluginDir, `.temp-${version.version}.xpi`)
 
   try {
-    consola.debug(`Downloading XPI for verification: ${version.update_link}`)
+    consola.debug(`Downloading XPI: ${version.update_link}`)
     await downloadXpi(version.update_link, tempXpiPath, (progress) => {
       if (progress.total) {
         const percent = Math.round((progress.loaded / progress.total) * 100)
@@ -37,22 +60,26 @@ async function verifyLatestXpi(version: Version, pluginId: string): Promise<void
       }
     })
 
-    // Extract and verify manifest
-    const manifestInfo = await extractXpiInfo(tempXpiPath)
-    if (!manifestInfo.id) {
-      throw new Error('XPI manifest.json has no id field')
-    }
+    consola.debug(`Saving XPI to cache for ${pluginId} v${version.version}`)
+    const xpiMetadata = await saveXpiCache(
+      tempXpiPath,
+      pluginDir,
+      version.version,
+      pluginId,
+    )
 
-    if (manifestInfo.id !== pluginId) {
-      throw new Error(
-        `XPI manifest ID mismatch: expected "${pluginId}", got "${manifestInfo.id}"`,
-      )
-    }
+    consola.debug(
+      `XPI cached at ${xpiMetadata.url} (hash: ${xpiMetadata.hash?.slice(0, 12)}...)`,
+    )
 
-    consola.debug(`XPI verification passed for ${pluginId} v${version.version}`)
+    return {
+      version: xpiMetadata.version,
+      url: `${xpiMetadata.version}.xpi`,
+      hash: xpiMetadata.hash,
+    }
   }
   finally {
-    // Clean up temp file
+    // Clean up temp file if exists
     if (await fs.pathExists(tempXpiPath)) {
       await fs.remove(tempXpiPath)
     }
@@ -101,20 +128,25 @@ async function processPlugin(pluginId: string): Promise<void> {
 
   consola.debug(`Merged to ${mergedVersions.length} total versions`)
 
-  // Stage 4: Verify latest XPI (optional - skip on errors)
+  // Stage 4: Download and cache latest XPI
+  let cachedXpiInfo: { version: string, url: string, hash?: string } | undefined
   try {
     const latestVersion = mergedVersions[0]
     if (latestVersion?.update_link) {
-      await verifyLatestXpi(latestVersion, pluginId)
+      cachedXpiInfo = await downloadAndCacheLatestXpi(
+        latestVersion,
+        pluginId,
+        pluginDir,
+      )
     }
   }
   catch (error) {
     consola.warn(
-      `XPI verification failed for ${pluginId}: ${
+      `XPI download/cache failed for ${pluginId}: ${
         error instanceof Error ? error.message : String(error)
       }`,
     )
-    // Don't fail the entire plugin - XPI verification is optional
+    // Don't fail the entire plugin - XPI caching is optional
   }
 
   // Stage 5: Extract compatibility
@@ -171,8 +203,19 @@ async function processPlugin(pluginId: string): Promise<void> {
   await fs.writeJSON(cachePath, {
     timestamp: new Date().toISOString(),
     update_json_hash: JSON.stringify(mergedVersions),
+    cachedXpi: cachedXpiInfo,
   })
   consola.debug(`Updated cache at ${cachePath}`)
+
+  // Cleanup: Keep only the 3 most recent cached XPI versions
+  try {
+    await cleanupOldXpiCaches(pluginDir, 3)
+  }
+  catch (error) {
+    consola.debug(
+      `XPI cache cleanup skipped: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
 }
 
 /**
